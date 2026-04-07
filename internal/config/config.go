@@ -3,7 +3,7 @@ package config
 import (
 	"os"
 	"encoding/json"
-	"fmt"
+	"path/filepath"
 )
 
 const configFileName = ".gatorconfig.json"
@@ -13,40 +13,33 @@ type Config struct {
 	CurrentUserName		string	`json:"current_user_name"`
 }
 
-func Read() Config {
+func Read() (Config, error) {
 	// Get Config File Path
 	configPath, err := getConfigFilePath()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-		return Config{}
+		return Config{}, err
 	}
 
 	// Open Config File and Defer Closing
 	configFile, err := os.Open(configPath)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-		return Config{}
+		return Config{}, err
 	}
 	defer configFile.Close()
 
 	// Decode the Content
 	decoder := json.NewDecoder(configFile)
-	config := Config{}
-	err = decoder.Decode(&config)
+	cfg := Config{}
+	err = decoder.Decode(&cfg)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-		return Config{}
+		return Config{}, err
 	}
-	return config
+	return cfg, nil
 }
 
-func (c *Config) SetUser(name string) error {
-	c.CurrentUserName = name
-	err := write(*c)
-	return err
+func (cfg *Config) SetUser(name string) error {
+	cfg.CurrentUserName = name
+	return write(*cfg)
 }
 
 func getConfigFilePath() (string, error) {
@@ -54,7 +47,8 @@ func getConfigFilePath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return homeDir + "/" + configFileName, nil	
+	fullPath := filepath.Join(homeDir, configFileName)
+	return fullPath, nil	
 }
 
 func write(cfg Config) error {
@@ -65,20 +59,15 @@ func write(cfg Config) error {
 	}
 
 	// Open Config File and Defer Closing
-	configFile, err := os.OpenFile(configPath, os.O_WRONLY | os.O_TRUNC, 0644)
+	configFile, err := os.Create(configPath)
 	if err != nil {
 		return err
 	}
 	defer configFile.Close()
 
-	// Marshal Config struct
-	jsonData, err := json.Marshal(cfg)
-	if err != nil {
-		return err
-	}
-
-	// Write to File
-	_, err = configFile.Write(jsonData)
+	// Encode Data
+	encoder := json.NewEncoder(configFile)
+	err = encoder.Encode(cfg)
 	if err != nil {
 		return err
 	}
