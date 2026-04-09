@@ -44,6 +44,17 @@ func handlerAddFeed(s *state, cmd command) error {
 	printFeed(feed, user)
 	fmt.Println()
 	fmt.Println("=====================================")
+
+	err = handlerFollow(
+		s, 
+		command{
+			Name: "follow",
+			Args: []string{feed.Url},
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("couldn't follow feed: %w", err)
+	}
 	return nil
 }
 
