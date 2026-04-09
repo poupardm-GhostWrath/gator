@@ -9,7 +9,7 @@ import (
 	"github.com/poupardm-GhostWrath/gator/internal/database"
 )
 
-func handlerAddFeed(s *state, cmd command) error {
+func handlerAddFeed(s *state, cmd command, user database.User) error {
 	// Check Args Length
 	if len(cmd.Args) != 2 {
 		return fmt.Errorf("usage: %s <name> <url>", cmd.Name)
@@ -18,12 +18,6 @@ func handlerAddFeed(s *state, cmd command) error {
 	// Assign Args to Variables
 	name := cmd.Args[0]
 	url := cmd.Args[1]
-
-	// Get User From DB
-	user, err := s.db.GetUser(context.Background(), s.cfg.CurrentUserName)
-	if err != nil {
-		return fmt.Errorf("couldn't find user: %w", err)
-	}
 
 	// Create Feed
 	feed, err := s.db.CreateFeed(
@@ -51,6 +45,7 @@ func handlerAddFeed(s *state, cmd command) error {
 			Name: "follow",
 			Args: []string{feed.Url},
 		},
+		user,
 	)
 	if err != nil {
 		return fmt.Errorf("couldn't follow feed: %w", err)
