@@ -50,6 +50,7 @@ func main() {
 	cmds.register("users", handlerListUsers)
 	cmds.register("agg", handlerAgg)
 	cmds.register("addfeed", handlerAddFeed)
+	cmds.register("feeds", handlerListFeeds)
 
 	// Get the args and split
 	if len(os.Args) < 2 {
