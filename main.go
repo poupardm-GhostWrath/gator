@@ -62,6 +62,11 @@ func main() {
 		log.Fatal("Usage: cli <command> [args...]")
 	}
 
+	if os.Args[1] == "help" {
+		cmds.listCommands()
+		os.Exit(0)
+	}
+
 	cmd := command{
 		Name: os.Args[1],
 		Args: os.Args[2:],
