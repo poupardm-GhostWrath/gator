@@ -128,7 +128,9 @@ Run `goose -version` to make sure it's installed correctly.
 
 6. Create DB
 
-`cd sql/schema`
+```
+cd sql/schema
+```
 
 Run the next command 5 times to build DB:
 ```
