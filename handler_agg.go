@@ -5,7 +5,10 @@ import (
 	"time"
 	"log"
 	"context"
+	"database/sql"
+	"strings"
 
+	"github.com/google/uuid"
 	"github.com/poupardm-GhostWrath/gator/internal/database"
 )
 
@@ -52,7 +55,37 @@ func scrapeFeed(db *database.Queries, feed database.Feed) {
 	}
 
 	for _, item := range rssFeed.Channel.Item {
-		fmt.Printf("Found post: %s\n", item.Title)
+		publishedAt := sql.NullTime{}
+		if publishedTime, err := time.Parse(time.RFC1123Z, item.PubDate); err == nil {
+			publishedAt = sql.NullTime{
+				Time: publishedTime,
+				Valid: true,
+			}
+		}
+		_, err = db.CreatePost(
+			context.Background(),
+			database.CreatePostParams{
+				ID: uuid.New(),
+				CreatedAt: time.Now().UTC(),
+				UpdatedAt: time.Now().UTC(),
+				Title: item.Title,
+				Url: item.Link,
+				Description: sql.NullString{
+					String: item.Description,
+					Valid: true,
+				},
+				PublishedAt: publishedAt,
+				FeedID: feed.ID,
+			},
+		)
+		if err != nil {
+			if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+				continue
+			}
+			log.Printf("couldn't create post: %v", err)
+			continue
+		}
 	}
 	log.Printf("Feed %s collected, %v posts found", feed.Name, len(rssFeed.Channel.Item))
 }
+
